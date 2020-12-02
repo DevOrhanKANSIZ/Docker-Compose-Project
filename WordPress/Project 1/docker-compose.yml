@@ -1,54 +1,31 @@
-version: '3.7'
-volumes:
-  wp-data:
-networks:
-  wp-back:
+version: '2'
 services:
-  db:
-    image: mysql:5.7
+  mariadb:
+    image: 'docker.io/bitnami/mariadb:10.3-debian-10'
     volumes:
-      - wp-data:/var/lib/mysql
+      - 'mariadb_data:/bitnami/mariadb'
     environment:
-        MYSQL_ROOT_PASSWORD: rootPassword
-        MYSQL_DATABASE: wordpress
-        MYSQL_USER: wp-user
-        MYSQL_PASSWORD: wp-pass
-    ports:
-      - 8889:3306
-    networks:
-      - wp-back
-  phpmyadmin:
-    depends_on:
-      - db
-    image: phpmyadmin/phpmyadmin
-    environment:
-      PMA_HOST: db
-      MYSQL_USER: wp-user
-      MYSQL_PASSWORD: wp-pass
-      MYSQL_ROOT_PASSWORD: rootPassword
-    ports:
-      - 3001:80
-    networks:
-      - wp-back
+      - MARIADB_USER=bn_wordpress
+      - MARIADB_DATABASE=bitnami_wordpress
+      - ALLOW_EMPTY_PASSWORD=yes
   wordpress:
-    depends_on:
-      - db
-    image: wordpress:latest
+    image: 'docker.io/bitnami/wordpress:5-debian-10'
     ports:
-      - 8888:80
-      - 443:443
-    environment:
-        WORDPRESS_DB_HOST: db
-        WORDPRESS_DB_USER: wp-user
-        WORDPRESS_DB_PASSWORD: wp-pass
+      - '80:8080'
+      - '443:8443'
     volumes:
-      - ./wp-core:/var/www/html
-      # Themes
-      - ./themes/theme1:/var/www/html/wp-content/themes/theme1
-      # Plugins
-      - ./plugins/plugin1:/var/www/html/wp-content/themes/plugin1
-      # Developer Plugins
-      - ./devPlugins:/var/www/html/wp-content/plugins
-    container_name: wordpress-site
-    networks:
-      - wp-back
+      - 'wordpress_data:/bitnami/wordpress'
+      - './themes:/bitnami/wordpress/wp-content/themes'
+    depends_on:
+      - mariadb
+    environment:
+      - MARIADB_HOST=mariadb
+      - MARIADB_PORT_NUMBER=3306
+      - WORDPRESS_DATABASE_USER=bn_wordpress
+      - WORDPRESS_DATABASE_NAME=bitnami_wordpress
+      - ALLOW_EMPTY_PASSWORD=yes
+volumes:
+  mariadb_data:
+    driver: local
+  wordpress_data:
+    driver: local
